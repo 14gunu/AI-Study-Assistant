@@ -61,27 +61,6 @@ This project automates that process using Artificial Intelligence, helping stude
 * Pillow
 * PyPDF
 
----
-
-## 📸 Screenshots
-
-### Home Page
-
-![Home Page](home_page.png)
-
-### Questions Generation
-
-![Questions](question_output.png)
-
-### MCQ Generation
-
-![MCQ](mcq_output.png)
-
-### Flashcard Generation
-
-![Flashcards](flashcard_output.png)
-
----
 
 ## ⚙️ Installation Guide
 
