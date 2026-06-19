@@ -6,10 +6,24 @@ from pypdf import PdfReader
 # Page Setup
 st.set_page_config(page_title="AI Study Assistant", page_icon="🎓", layout="wide")
 
-# Styling
+# Styling: Added dotted floral background and motivation title style
 st.markdown("""
 <style>
-    .stApp { background-color: #0e1117; color: #ffffff; }
+    .stApp { 
+        background-color: #0e1117; 
+        color: #ffffff;
+        background-image: radial-gradient(#262730 1px, transparent 1px), 
+                          radial-gradient(#262730 1px, transparent 1px);
+        background-size: 40px 40px;
+        background-position: 0 0, 20px 20px;
+    }
+    .stApp::before {
+        content: "✿";
+        position: fixed; top: 10px; right: 20px; font-size: 30px; color: #ff4b4b; opacity: 0.3;
+    }
+    .motivation-title {
+        text-align: center; color: #ff4b4b; font-style: italic; margin-bottom: 20px;
+    }
     .stButton>button { background-color: #ff4b4b; color: white; border-radius: 8px; }
 </style>
 """, unsafe_allow_html=True)
@@ -27,6 +41,9 @@ st.sidebar.write("🔥 Streak: 3 Days")
 
 # Main Interface
 st.title("🎓 AI Study Assistant")
+# ADDED: Motivation Title
+st.markdown("<h3 class='motivation-title'>✨ Dream Big, Study Hard, Achieve More! ✨</h3>", unsafe_allow_html=True)
+
 st.caption("Upload notes, PDFs, or images and instantly generate study materials.")
 
 with st.expander("🔑 Gemini API Settings"):
@@ -60,7 +77,6 @@ def generate_ai_content(prompt_type):
     
     try:
         genai.configure(api_key=api_key)
-        # Using the specific model confirmed from your list
         model = genai.GenerativeModel("gemini-2.5-flash")
         
         with st.spinner(f"🤖 AI is crafting your {prompt_type}..."):
@@ -71,7 +87,6 @@ def generate_ai_content(prompt_type):
             IMPORTANT: Return as CLEAN PLAIN TEXT. No Markdown or bold asterisks.
             """]
             
-            # Append images correctly
             if uploaded_files:
                 for file in uploaded_files:
                     if file.type.startswith("image"):
