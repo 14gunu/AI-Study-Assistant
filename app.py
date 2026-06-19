@@ -3,37 +3,43 @@ import google.generativeai as genai
 from PIL import Image
 from pypdf import PdfReader
 
-# 1. Page Configuration (Must be first)
-st.set_page_config(page_title="AI Study Assistant", page_icon="📚", layout="wide")
+# Page Setup
+st.set_page_config(page_title="AI Study Assistant", page_icon="🎓", layout="wide")
 
-# 2. Styling
+# Styling
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; color: #ffffff; }
-    .stTextArea, .stFileUploader { background-color: #262730; }
-    .stButton>button { background-color: #ff4b4b; color: white; border-radius: 8px; border: none; }
-    div[data-testid="stExpander"] { background-color: #1e1e2e; border: none; }
+    .stButton>button { background-color: #ff4b4b; color: white; border-radius: 8px; }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Session State
+# Session State
 if 'content' not in st.session_state: st.session_state.content = ""
 
-# 4. Main Interface
-st.title("📚 AI Study Assistant")
-st.caption("Upload notes, PDFs, or images and instantly generate summaries, MCQs, questions, and flashcards.")
+# Sidebar
+st.sidebar.title("🎓 AI Study Hub")
+difficulty = st.sidebar.select_slider("Select Difficulty", options=["Easy", "Medium", "Hard"])
+st.sidebar.write("---")
+st.sidebar.write("📊 **Progress Tracker**")
+st.sidebar.progress(0.4)
+st.sidebar.write("🔥 Streak: 3 Days")
+
+# Main Interface
+st.title("🎓 AI Study Assistant")
+st.caption("Upload notes, PDFs, or images and instantly generate study materials.")
 
 with st.expander("🔑 Gemini API Settings"):
     api_key = st.text_input("Enter Gemini API Key", type="password")
 
-st.markdown("### Upload your study materials")
+# Upload and Input
 col1, col2 = st.columns(2)
 with col1:
-    uploaded_files = st.file_uploader("📸 Upload Multiple Images or PDFs", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader("📸 Upload Materials", type=["jpg", "png", "pdf"], accept_multiple_files=True)
 with col2:
-    notes = st.text_area("📝 Or paste your notes here", height=150)
+    notes = st.text_area("📝 Or paste notes here", height=100)
 
-# 5. Content Logic
+# Process Content
 combined_text = notes + "\n"
 if uploaded_files:
     for file in uploaded_files:
@@ -42,55 +48,56 @@ if uploaded_files:
             for page in reader.pages:
                 text = page.extract_text()
                 if text: combined_text += text + "\n"
-    st.success("✅ Files processed successfully")
-
 st.session_state.content = combined_text
 
-# 6. Tabs
-tab1, tab2, tab3, tab4 = st.tabs(["📝 Summary", "❓ Questions", "✅ MCQs", "🃏 Flashcards"])
+# Tabs
+tab1, tab2, tab3, tab4 = st.tabs(["📝 Summary", "❓ Questions", "✅ Quiz Mode", "🃏 Flashcards"])
 
 def generate_ai_content(prompt_type):
     if not api_key:
-        st.error("Please enter your Gemini API Key in the settings expander above.")
+        st.error("Please enter your API Key in the settings expander.")
         return
     
     try:
         genai.configure(api_key=api_key)
-        # Using the most stable model identifier
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        # Using the specific model confirmed from your list
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
-        contents = [f"""
-        Task: Generate {prompt_type}.
-        Context: {st.session_state.content}
-        IMPORTANT: Return the output as CLEAN PLAIN TEXT. 
-        Do NOT use Markdown, bold asterisks, or headings.
-        """]
-        
-        if uploaded_files:
-            for file in uploaded_files:
-                if file.type.startswith("image"):
-                    contents.append(Image.open(file))
-        
-        response = model.generate_content(contents)
-        st.success("✨ Content generated successfully!")
-        st.info(response.text)
-        st.download_button("Download Result", response.text, file_name=f"{prompt_type.replace(' ', '_')}.txt")
-        
+        with st.spinner(f"🤖 AI is crafting your {prompt_type}..."):
+            contents = [f"""
+            Task: Generate {prompt_type}.
+            Difficulty Level: {difficulty}.
+            Context/Notes: {st.session_state.content}
+            IMPORTANT: Return as CLEAN PLAIN TEXT. No Markdown or bold asterisks.
+            """]
+            
+            # Append images correctly
+            if uploaded_files:
+                for file in uploaded_files:
+                    if file.type.startswith("image"):
+                        file.seek(0)
+                        contents.append(Image.open(file))
+            
+            response = model.generate_content(contents)
+            st.success("✨ Content generated successfully!")
+            st.info(response.text)
+            st.download_button("Download Result", response.text, file_name="study_material.txt")
+            
     except Exception as e:
         if "429" in str(e):
-            st.error("🚫 API limit reached. Wait a while or check your key.")
+            st.error("🚫 API limit reached. Please wait a moment.")
         else:
             st.error(f"Error: {e}")
 
 with tab1:
     if st.button("Generate Summary"): generate_ai_content("a simple summary")
 with tab2:
-    if st.button("Generate 5 Important Questions"): generate_ai_content("5 important questions")
+    if st.button("Generate Important Questions"): generate_ai_content("5 key study questions")
 with tab3:
-    if st.button("Generate MCQs"): generate_ai_content("10 MCQs with 4 options each and correct answers")
+    st.write("### 🧠 AI Quiz Mode")
+    if st.button("Start Quiz"): generate_ai_content("10 MCQs with answers")
 with tab4:
-    if st.button("Generate Flashcards"): generate_ai_content("10 flashcards in Question : Answer format")
+    if st.button("Generate Flashcards"): generate_ai_content("10 Flashcards")
 
-# 7. Footer
 st.markdown("---")
 st.caption("Built with Streamlit + Gemini AI")
