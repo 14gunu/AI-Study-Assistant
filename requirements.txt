@@ -1,4 +1,2 @@
-streamlit
-google-generativeai
-pillow
-pypdf
+streamlit>=1.36.0
+google-genai>=1.0.0
